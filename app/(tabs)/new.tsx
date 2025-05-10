@@ -1,110 +1,192 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import Slider from 'react-native-ui-lib/slider'
+import Switch from 'react-native-ui-lib/switch'
+import RadioGroup from 'react-native-ui-lib/radioGroup'
+import RadioButton from 'react-native-ui-lib/radioButton'
+import { useState } from 'react'
+import { Alert, Button, Text, TextInput, View } from 'react-native'
+import DatePicker from 'react-native-date-picker'
+import Checkbox from 'react-native-ui-lib/src/components/checkbox'
 
 export default function NewTaskScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
-}
+  const [title, setTitle] = useState<string>('')
+  const [difficulty, setDifficulty] = useState<number>(0)
+  const [priority, setPriority] = useState<number>(0)
+  const [date, setDate] = useState<Date>(new Date())
+  const [time, setTime] = useState<Date>(new Date())
+  const [isTime, setIsTime] = useState<boolean>(false)
+  const [openDatePicker, setOpenDatePicker] = useState(false)
+  const [openTimePicker, setOpenTimePicker] = useState(false)
+  //*** */
+  const [isCyclic, setIsCyclic] = useState<boolean>(false)
+  const [cyclicType, setCyclicType] = useState<0 | 1 | 2>(0)
+  const [period, setPeriod] = useState<number>(1)
+  const [monthDay, setMonthDay] = useState<number>(1)
+  const [weekDay, setWeekDay] = useState<
+    ('mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun')[] | null
+  >(null)
 
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+  function addTask() {
+    if (!title || !date) {
+      Alert.alert('Błąd', 'Tytuł i data są wymagane')
+      return
+    }
+
+    const newTask = {
+      title,
+      difficulty,
+      priority,
+      date,
+      time: isTime ? time : null,
+      //cyclic,
+      //parent: null,
+    }
+
+    if (!isCyclic)
+      try {
+        ;(async () => {
+          const tasks = await AsyncStorage.getItem('tasks')
+          if (tasks) {
+            const parsedTasks = JSON.parse(tasks)
+            parsedTasks.push(newTask)
+            await AsyncStorage.setItem('tasks', JSON.stringify(parsedTasks))
+          } else {
+            await AsyncStorage.setItem('tasks', JSON.stringify([newTask]))
+          }
+        })()
+
+        setTitle('')
+        setDifficulty(0)
+        setPriority(0)
+        setIsTime(false)
+        console.log('Task saved successfully!')
+      } catch (error) {
+        console.error('Error saving task:', error)
+      }
+  }
+
+  return (
+    <View>
+      <TextInput
+        value={title}
+        onChangeText={value => setTitle(value)}
+      ></TextInput>
+      <Text style={{ fontSize: 20 }} onPress={() => setOpenDatePicker(true)}>
+        {date.toLocaleString('pl-PL', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+        })}{' '}
+        Zmień datę
+      </Text>
+      <Text>Czy ustawić godzinę?</Text>
+      <Switch
+        value={isTime}
+        onValueChange={() => setIsTime(prev => !prev)}
+      ></Switch>
+      <Text style={{ fontSize: 20 }} onPress={() => setOpenTimePicker(true)}>
+        {isTime
+          ? time.toLocaleString('pl-PL', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : 'Zmień godzinę'}
+      </Text>
+      <Slider
+        style={{ width: 200, height: 40 }}
+        minimumValue={0}
+        maximumValue={5}
+        value={difficulty}
+        onValueChange={value => setDifficulty(value)}
+        step={1} //? is it default?
+        minimumTrackTintColor="#FFFFFF"
+        maximumTrackTintColor="#000000"
+      />
+      <Slider
+        style={{ width: 200, height: 40 }}
+        minimumValue={0}
+        maximumValue={5}
+        value={priority}
+        onValueChange={value => setPriority(value)}
+        step={1} //? is it default?
+        minimumTrackTintColor="#FFFFFF"
+        maximumTrackTintColor="#000000"
+      />
+      <Text>Czy zadanie jest cykliczne?</Text>
+      <Switch
+        value={isCyclic}
+        onValueChange={() => setIsCyclic(prev => !prev)}
+      ></Switch>
+      {isCyclic && (
+        <>
+          <View>
+            <Text>Jak często?</Text>
+            <RadioGroup>
+              <RadioButton
+                label="Co X dni"
+                value={0}
+                onPress={() => setDifficulty(0)}
+              />
+              <RadioButton
+                label="W określone dni tygodnia"
+                value={1}
+                onPress={() => setDifficulty(1)}
+              />
+              <RadioButton
+                label="W określone dni miesiąca"
+                value={2}
+                onPress={() => setDifficulty(2)}
+              />
+            </RadioGroup>
+          </View>
+          <View>
+            {cyclicType === 1 && (
+              <>
+                {/* <Checkbox value={value} onValueChange={setValue} /> */}
+                {/* <Checkbox value={value} onValueChange={setValue} /> */}
+              </>
+            )}
+          </View>
+        </>
+      )}
+      <DatePicker
+        modal
+        mode="date"
+        open={openDatePicker}
+        date={date}
+        onConfirm={date => {
+          setOpenDatePicker(false)
+          setDate(date)
+          // console.log(date)
+        }}
+        onCancel={() => {
+          setOpenDatePicker(false)
+        }}
+        locale="pl-PL"
+        title="Wybierz datę"
+        cancelText="anuluj"
+        confirmText="zatwierdź"
+      />
+      <DatePicker
+        modal
+        mode="time"
+        open={openTimePicker}
+        date={time}
+        onConfirm={time => {
+          setOpenTimePicker(false)
+          setTime(time)
+          // console.log(date)
+        }}
+        onCancel={() => {
+          setOpenTimePicker(false)
+        }}
+        locale="pl-PL"
+        title="Wybierz godzinę"
+        cancelText="anuluj"
+        confirmText="zatwierdź"
+      />
+      <Button title="Dodaj zadanie" onPress={() => addTask()}></Button>
+    </View>
+  )
+}

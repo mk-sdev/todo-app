@@ -1,12 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import Slider from 'react-native-ui-lib/slider'
-import Switch from 'react-native-ui-lib/switch'
-import RadioGroup from 'react-native-ui-lib/radioGroup'
-import RadioButton from 'react-native-ui-lib/radioButton'
 import { useState } from 'react'
-import { Alert, Button, Text, TextInput, View } from 'react-native'
-import DatePicker from 'react-native-date-picker'
+import {
+  Alert,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
+import RadioButton from 'react-native-ui-lib/radioButton'
+import RadioGroup from 'react-native-ui-lib/radioGroup'
+import Slider from 'react-native-ui-lib/slider'
 import Checkbox from 'react-native-ui-lib/src/components/checkbox'
+import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
+import Switch from 'react-native-ui-lib/switch'
 
 export default function NewTaskScreen() {
   const [title, setTitle] = useState<string>('')
@@ -15,8 +23,6 @@ export default function NewTaskScreen() {
   const [date, setDate] = useState<Date>(new Date())
   const [time, setTime] = useState<Date>(new Date())
   const [isTime, setIsTime] = useState<boolean>(false)
-  const [openDatePicker, setOpenDatePicker] = useState(false)
-  const [openTimePicker, setOpenTimePicker] = useState(false)
   //*** */
   const [isCyclic, setIsCyclic] = useState<boolean>(false)
   const [cyclicType, setCyclicType] = useState<0 | 1 | 2>(0)
@@ -25,25 +31,26 @@ export default function NewTaskScreen() {
   const [weekDays, setWeekDays] = useState<Day[]>([])
 
   function addTask() {
-    if (!title || (!date && !isCyclic)) {
+    if (!title) {
       //jeśli jest cykliczne to data nie jest wymagana
-      Alert.alert('Błąd', 'Tytuł i data są wymagane')
+      Alert.alert('Błąd', 'Tytuł jest wymagany')
       return
     }
 
     if (isCyclic) {
       const newTask = {
+        completed: false,
         title,
         difficulty,
         priority,
-        date,
-        time: isTime ? time : null,
+        date: date.toLocaleDateString('en-CA'),
+        time: isTime ? time.toLocaleTimeString('en-CA') : null,
         parent: title,
         cyclic: {
           type: cyclicType,
           period: period ? period : null,
-          weekDay: weekDays.length ? weekDays : null,
-          monthDay: monthDays.length ? monthDays : null,
+          weekDays: weekDays.length ? weekDays : null,
+          monthDays: monthDays.length ? monthDays : null,
         },
       }
 
@@ -78,11 +85,12 @@ export default function NewTaskScreen() {
 
     if (!isCyclic) {
       const newTask = {
+        completed: false,
         title,
         difficulty,
         priority,
-        date,
-        time: isTime ? time : null,
+        date: date.toLocaleDateString('en-CA'),
+        time: isTime ? time.toLocaleTimeString('en-CA') : null,
         parent: null,
       }
 
@@ -128,33 +136,56 @@ export default function NewTaskScreen() {
   }
 
   return (
-    <View>
+    <ScrollView contentContainerStyle={{ padding: 20, gap: 20, paddingTop: 40 }}>
       <TextInput
         value={title}
+        style={{ fontSize: 20}}
+        placeholder='wpisz tytuł zadania'
         onChangeText={value => setTitle(value)}
       ></TextInput>
-      <Text style={{ fontSize: 20 }} onPress={() => setOpenDatePicker(true)}>
-        {date.toLocaleString('pl-PL', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        })}{' '}
-        Zmień datę
-      </Text>
-      <Text>Czy ustawić godzinę?</Text>
+      <DateTimePicker
+        value={date}
+        mode={'date'}
+        locale="pl-PL"
+        style={{ fontSize: 20, fontWeight: 'bold' }}
+        minimumDate={new Date()}
+        onChange={value => {
+          setDate(value)
+        }}
+        dateTimeFormatter={date =>
+          date.toLocaleDateString('pl-PL', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        }
+      />
+
+      <Text style={styles.text}>Czy ustawić godzinę?</Text>
       <Switch
         value={isTime}
         onValueChange={() => setIsTime(prev => !prev)}
       ></Switch>
-      <Text style={{ fontSize: 20 }} onPress={() => setOpenTimePicker(true)}>
-        {isTime
-          ? time.toLocaleString('pl-PL', {
+      {isTime && (
+        <DateTimePicker
+          value={time}
+          mode={'time'}
+          locale="pl-PL"
+          style={{ fontSize: 20, fontWeight: 'bold' }}
+          onChange={value => {
+            setTime(value)
+          }}
+          dateTimeFormatter={date =>
+            time.toLocaleString('pl-PL', {
               hour: '2-digit',
               minute: '2-digit',
             })
-          : 'Zmień godzinę'}
-      </Text>
+          }
+        />
+      )}
+
+      <Text style={styles.text}>Ustaw poziom trudności: {difficulty}</Text>
       <Slider
         style={{ width: 200, height: 40 }}
         minimumValue={0}
@@ -165,6 +196,7 @@ export default function NewTaskScreen() {
         minimumTrackTintColor="#FFFFFF"
         maximumTrackTintColor="#000000"
       />
+      <Text style={styles.text}>Ustaw priorytet: {priority}</Text>
       <Slider
         style={{ width: 200, height: 40 }}
         minimumValue={0}
@@ -175,7 +207,7 @@ export default function NewTaskScreen() {
         minimumTrackTintColor="#FFFFFF"
         maximumTrackTintColor="#000000"
       />
-      <Text>Czy zadanie jest cykliczne?</Text>
+      <Text style={styles.text}>Czy zadanie jest cykliczne?</Text>
       <Switch
         value={isCyclic}
         onValueChange={() => setIsCyclic(prev => !prev)}
@@ -183,29 +215,30 @@ export default function NewTaskScreen() {
       {isCyclic && (
         <>
           <View>
-            <Text>Jak często?</Text>
-            <RadioGroup>
+            <Text style={styles.text}>Jak często?</Text>
+            <RadioGroup initialValue={0} style={{ gap: 10, paddingTop: 20 }}>
               <RadioButton
                 label="Co X dni"
                 value={0}
-                onPress={() => setDifficulty(0)}
+                selected
+                onPress={() => setCyclicType(0)}
               />
               <RadioButton
                 label="W określone dni tygodnia"
                 value={1}
-                onPress={() => setDifficulty(1)}
+                onPress={() => setCyclicType(1)}
               />
               <RadioButton
                 label="W określone dni miesiąca"
                 value={2}
-                onPress={() => setDifficulty(2)}
+                onPress={() => setCyclicType(2)}
               />
             </RadioGroup>
           </View>
           <View>
             {cyclicType === 0 && (
               <>
-                <Text>Co ile dni?</Text>
+                <Text style={styles.text}>Co ile dni?</Text>
                 <Slider
                   style={{ width: 200, height: 40 }}
                   minimumValue={1}
@@ -216,7 +249,7 @@ export default function NewTaskScreen() {
                   minimumTrackTintColor="#FFFFFF"
                   maximumTrackTintColor="#000000"
                 />
-                <Text>
+                <Text style={styles.text}>
                   {period === 1 ? 'codziennie' : 'co ' + period + ' dni'}
                 </Text>
               </>
@@ -237,63 +270,38 @@ export default function NewTaskScreen() {
             {cyclicType === 2 && (
               <>
                 <Text>Wybierz dni miesiąca</Text>
-                {Array.from({ length: 31 }, (_, i) => (
-                  <Checkbox
-                    key={i + 1}
-                    label={`${i + 1}`}
-                    value={monthDays.includes(i + 1)}
-                    onValueChange={() =>
-                      setMonthDays(prev =>
-                        prev.includes(i + 1)
-                          ? prev.filter(d => d !== i + 1)
-                          : [...prev, i + 1]
-                      )
-                    }
-                    marginB-10
-                  />
-                ))}
+                <View
+                  style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}
+                >
+                  {Array.from({ length: 31 }, (_, i) => (
+                    <Checkbox
+                      key={i + 1}
+                      label={`${i + 1}`}
+                      value={monthDays.includes(i + 1)}
+                      onValueChange={() =>
+                        setMonthDays(prev =>
+                          prev.includes(i + 1)
+                            ? prev.filter(d => d !== i + 1)
+                            : [...prev, i + 1]
+                        )
+                      }
+                      marginB-5
+                    />
+                  ))}
+                </View>
               </>
             )}
           </View>
         </>
       )}
-      <DatePicker
-        modal
-        mode="date"
-        open={openDatePicker}
-        date={date}
-        onConfirm={date => {
-          setOpenDatePicker(false)
-          setDate(date)
-          // console.log(date)
-        }}
-        onCancel={() => {
-          setOpenDatePicker(false)
-        }}
-        locale="pl-PL"
-        title="Wybierz datę"
-        cancelText="anuluj"
-        confirmText="zatwierdź"
-      />
-      <DatePicker
-        modal
-        mode="time"
-        open={openTimePicker}
-        date={time}
-        onConfirm={time => {
-          setOpenTimePicker(false)
-          setTime(time)
-          // console.log(date)
-        }}
-        onCancel={() => {
-          setOpenTimePicker(false)
-        }}
-        locale="pl-PL"
-        title="Wybierz godzinę"
-        cancelText="anuluj"
-        confirmText="zatwierdź"
-      />
+
       <Button title="Dodaj zadanie" onPress={() => addTask()}></Button>
-    </View>
+    </ScrollView>
   )
 }
+
+const styles = StyleSheet.create({
+  text: {
+    fontSize: 20,
+  },
+})

@@ -21,28 +21,71 @@ export default function NewTaskScreen() {
   const [isCyclic, setIsCyclic] = useState<boolean>(false)
   const [cyclicType, setCyclicType] = useState<0 | 1 | 2>(0)
   const [period, setPeriod] = useState<number>(1)
-  const [monthDay, setMonthDay] = useState<number>(1)
-  const [weekDay, setWeekDay] = useState<
-    ('mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun')[] | null
-  >(null)
+  const [monthDays, setMonthDays] = useState<number[]>([])
+  const [weekDays, setWeekDays] = useState<Day[]>([])
 
   function addTask() {
-    if (!title || !date) {
+    if (!title || (!date && !isCyclic)) {
+      //jeśli jest cykliczne to data nie jest wymagana
       Alert.alert('Błąd', 'Tytuł i data są wymagane')
       return
     }
 
-    const newTask = {
-      title,
-      difficulty,
-      priority,
-      date,
-      time: isTime ? time : null,
-      //cyclic,
-      //parent: null,
+    if (isCyclic) {
+      const newTask = {
+        title,
+        difficulty,
+        priority,
+        date,
+        time: isTime ? time : null,
+        parent: title,
+        cyclic: {
+          type: cyclicType,
+          period: period ? period : null,
+          weekDay: weekDays.length ? weekDays : null,
+          monthDay: monthDays.length ? monthDays : null,
+        },
+      }
+
+      try {
+        ;(async () => {
+          const tasks = await AsyncStorage.getItem('cyclicTasks')
+          if (tasks) {
+            const parsedTasks = JSON.parse(tasks)
+            if (parsedTasks.some((task: any) => task.title === title)) {
+              Alert.alert('Błąd', 'Zadanie o tej nazwie już istnieje')
+              return
+            }
+            parsedTasks.push(newTask)
+            await AsyncStorage.setItem(
+              'cyclicTasks',
+              JSON.stringify(parsedTasks)
+            )
+          } else {
+            await AsyncStorage.setItem('cyclicTasks', JSON.stringify([newTask]))
+          }
+        })()
+
+        setTitle('')
+        setDifficulty(0)
+        setPriority(0)
+        setIsTime(false)
+        console.log('Cyclic task saved successfully!')
+      } catch (error) {
+        console.error('Error saving cyclic task:', error)
+      }
     }
 
-    if (!isCyclic)
+    if (!isCyclic) {
+      const newTask = {
+        title,
+        difficulty,
+        priority,
+        date,
+        time: isTime ? time : null,
+        parent: null,
+      }
+
       try {
         ;(async () => {
           const tasks = await AsyncStorage.getItem('tasks')
@@ -63,6 +106,25 @@ export default function NewTaskScreen() {
       } catch (error) {
         console.error('Error saving task:', error)
       }
+    }
+  }
+
+  type Day = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+
+  const daysOfWeek: { key: Day; label: string }[] = [
+    { key: 'mon', label: 'Poniedziałek' },
+    { key: 'tue', label: 'Wtorek' },
+    { key: 'wed', label: 'Środa' },
+    { key: 'thu', label: 'Czwartek' },
+    { key: 'fri', label: 'Piątek' },
+    { key: 'sat', label: 'Sobota' },
+    { key: 'sun', label: 'Niedziela' },
+  ]
+
+  function toggleDay(day: Day) {
+    setWeekDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    )
   }
 
   return (
@@ -141,10 +203,55 @@ export default function NewTaskScreen() {
             </RadioGroup>
           </View>
           <View>
+            {cyclicType === 0 && (
+              <>
+                <Text>Co ile dni?</Text>
+                <Slider
+                  style={{ width: 200, height: 40 }}
+                  minimumValue={1}
+                  maximumValue={30}
+                  value={period}
+                  onValueChange={value => setPeriod(value)}
+                  step={1} //? is it default?
+                  minimumTrackTintColor="#FFFFFF"
+                  maximumTrackTintColor="#000000"
+                />
+                <Text>
+                  {period === 1 ? 'codziennie' : 'co ' + period + ' dni'}
+                </Text>
+              </>
+            )}
             {cyclicType === 1 && (
               <>
-                {/* <Checkbox value={value} onValueChange={setValue} /> */}
-                {/* <Checkbox value={value} onValueChange={setValue} /> */}
+                {daysOfWeek.map(({ key, label }) => (
+                  <Checkbox
+                    key={key}
+                    label={label}
+                    value={weekDays.includes(key as any)}
+                    onValueChange={() => toggleDay(key)}
+                    marginB-10
+                  />
+                ))}
+              </>
+            )}
+            {cyclicType === 2 && (
+              <>
+                <Text>Wybierz dni miesiąca</Text>
+                {Array.from({ length: 31 }, (_, i) => (
+                  <Checkbox
+                    key={i + 1}
+                    label={`${i + 1}`}
+                    value={monthDays.includes(i + 1)}
+                    onValueChange={() =>
+                      setMonthDays(prev =>
+                        prev.includes(i + 1)
+                          ? prev.filter(d => d !== i + 1)
+                          : [...prev, i + 1]
+                      )
+                    }
+                    marginB-10
+                  />
+                ))}
               </>
             )}
           </View>

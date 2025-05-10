@@ -1,58 +1,117 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useEffect, useState } from 'react'
+import { StyleSheet, View, Text, ScrollView } from 'react-native'
+import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
 export default function HomeScreen() {
+  type Task = {
+    completed: boolean
+    title: string
+    difficulty: number
+    priority: number
+    date: string
+    time: string | null
+    parent: string | null
+    cyclic?: {
+      type: 0 | 1 | 2
+      period: number | null
+      weekDays: Day[] | null
+      monthDays: number[] | null
+    }
+  }
+  type Day = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [day, setDay] = useState<Date>(new Date())
+  // AsyncStorage.clear()
+
+  useEffect(() => {
+    ;(async () => {
+      const storedTasks = await AsyncStorage.getItem('tasks')
+      if (storedTasks) {
+        const parsedTasks = JSON.parse(storedTasks)
+        setTasks(
+          parsedTasks.filter(
+            (task: Task) => task.date === day.toLocaleDateString('en-CA')
+          )
+        )
+      }
+      const cyclicTasks = await AsyncStorage.getItem('cyclicTasks')
+
+      const todayWeekDay = day
+        .toLocaleDateString('en-US', { weekday: 'short' })
+        .toLowerCase() // np. 'mon'
+      const todayDate = day.getDate() // dzień miesiąca
+
+      if (cyclicTasks) {
+        const parsedCyclicTasks = JSON.parse(cyclicTasks)
+        parsedCyclicTasks.forEach((task: Task) => {
+          const baseDate = new Date(task.date)
+          const diffDays = Math.floor(
+            (day.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)
+          )
+          //@ts-ignore
+          switch (task.cyclic.type) {
+            case 0:
+              //@ts-ignore // co X dni
+              if (diffDays % task.cyclic.period === 0)
+                setTasks(prev => [...prev, task])
+
+              break
+
+            case 1:
+              //@ts-ignore // w określone dni tygodnia
+              if (task?.cyclic.weekDays?.includes(todayWeekDay as Day))
+                setTasks(prev => [...prev, task])
+
+              break
+
+            case 2:
+              //@ts-ignore // w określone dni miesiąca
+              if (task?.cyclic.monthDays?.includes(todayDate))
+                setTasks(prev => [...prev, task])
+
+              break
+          }
+        })
+      }
+    })()
+  }, [day])
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+    <ScrollView
+      contentContainerStyle={{ padding: 20 }}
+      style={{ marginTop: 100 }}
+    >
+      <DateTimePicker
+        value={day}
+        mode={'date'}
+        locale="pl-PL"
+        style={{ fontSize: 20, fontWeight: 'bold' }}
+        minimumDate={new Date()}
+        onChange={(value: Date) => {
+          setDay(value)
+        }}
+        dateTimeFormatter={(date: Date) =>
+          date.toLocaleDateString('pl-PL', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        }
+      />
+      {tasks.map((task, index) => (
+        <View key={index} style={styles.stepContainer}>
+          <View style={styles.titleContainer}>
+            <Text style={{ fontWeight: 'bold' }}>{task.title}</Text>
+          </View>
+          <Text>Difficulty: {task.difficulty}</Text>
+          <Text>Priority: {task.priority}</Text>
+          <Text>Date: {task.date}</Text>
+          <Text>Time: {task.time}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -63,7 +122,8 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 18,
+    borderBottomWidth: 1,
   },
   reactLogo: {
     height: 178,
@@ -72,4 +132,4 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
   },
-});
+})

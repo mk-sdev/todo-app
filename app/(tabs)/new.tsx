@@ -15,6 +15,7 @@ import Slider from 'react-native-ui-lib/slider'
 import Checkbox from 'react-native-ui-lib/src/components/checkbox'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 import Switch from 'react-native-ui-lib/switch'
+import { Day, Task, CyclicTask } from '../../types'
 
 export default function NewTaskScreen() {
   const [title, setTitle] = useState<string>('')
@@ -38,20 +39,16 @@ export default function NewTaskScreen() {
     }
 
     if (isCyclic) {
-      const newTask = {
-        completed: false,
+      const newTask: CyclicTask = {
         title,
         difficulty,
         priority,
         date: date.toLocaleDateString('en-CA'),
         time: isTime ? time.toLocaleTimeString('en-CA') : null,
-        parent: title,
-        cyclic: {
-          type: cyclicType,
-          period: period ? period : null,
-          weekDays: weekDays.length ? weekDays : null,
-          monthDays: monthDays.length ? monthDays : null,
-        },
+        type: cyclicType,
+        period: period ? period : null,
+        weekDays: weekDays.length ? weekDays : null,
+        monthDays: monthDays.length ? monthDays : null,
       }
 
       try {
@@ -84,12 +81,13 @@ export default function NewTaskScreen() {
     }
 
     if (!isCyclic) {
-      const newTask = {
+      const newTask: Task = {
         completed: false,
         title,
         difficulty,
         priority,
         date: date.toLocaleDateString('en-CA'),
+        dateOfCompletion: null,
         time: isTime ? time.toLocaleTimeString('en-CA') : null,
         parent: null,
       }
@@ -117,8 +115,6 @@ export default function NewTaskScreen() {
     }
   }
 
-  type Day = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
-
   const daysOfWeek: { key: Day; label: string }[] = [
     { key: 'mon', label: 'Poniedziałek' },
     { key: 'tue', label: 'Wtorek' },
@@ -136,11 +132,13 @@ export default function NewTaskScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, gap: 20, paddingTop: 40 }}>
+    <ScrollView
+      contentContainerStyle={{ padding: 20, gap: 20, paddingTop: 40 }}
+    >
       <TextInput
         value={title}
-        style={{ fontSize: 20}}
-        placeholder='wpisz tytuł zadania'
+        style={{ fontSize: 20 }}
+        placeholder="wpisz tytuł zadania"
         onChangeText={value => setTitle(value)}
       ></TextInput>
       <DateTimePicker

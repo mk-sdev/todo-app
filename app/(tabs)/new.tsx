@@ -94,6 +94,16 @@ export default function NewTaskScreen() {
           const tasks = await AsyncStorage.getItem('tasks')
           if (tasks) {
             const parsedTasks = JSON.parse(tasks)
+            if (
+              parsedTasks.some(
+                (task: any) =>
+                  task.title === title &&
+                  task.date === date.toLocaleDateString('en-CA')
+              )
+            ) {
+              Alert.alert('Błąd', 'Zadanie o tej nazwie już istnieje')
+              return
+            }
             parsedTasks.push(newTask)
             await AsyncStorage.setItem('tasks', JSON.stringify(parsedTasks))
           } else {

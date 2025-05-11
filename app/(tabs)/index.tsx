@@ -1,81 +1,112 @@
+import { CyclicTask, Task } from '@/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useEffect, useState } from 'react'
-import { StyleSheet, View, Text, ScrollView } from 'react-native'
+import { useFocusEffect } from 'expo-router'
+import { useCallback, useState } from 'react'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
 export default function HomeScreen() {
-  type Task = {
-    completed: boolean
-    title: string
-    difficulty: number
-    priority: number
-    date: string
-    time: string | null
-    parent: string | null
-    cyclic?: {
-      type: 0 | 1 | 2
-      period: number | null
-      weekDays: Day[] | null
-      monthDays: number[] | null
-    }
-  }
   type Day = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
   const [tasks, setTasks] = useState<Task[]>([])
   const [day, setDay] = useState<Date>(new Date())
   // AsyncStorage.clear()
 
-  useEffect(() => {
-    ;(async () => {
+  async function setCyclicInstance(cyclicTasks: CyclicTask[]) {
+    console.log('🚀 ~ setCyclicInstance ~ cyclicTasks:', cyclicTasks)
+    try {
       const storedTasks = await AsyncStorage.getItem('tasks')
       if (storedTasks) {
-        const parsedTasks = JSON.parse(storedTasks)
-        setTasks(
-          parsedTasks.filter(
-            (task: Task) => task.date === day.toLocaleDateString('en-CA')
-          )
+        const parsedTasks: Task[] = JSON.parse(storedTasks)
+
+        // Dodaj tylko te zadania z cyclicTasks, których tytuły ORAZ daty nie występują w parsedTasks
+        const newCyclicTasks = cyclicTasks.filter(
+          cyclicTask =>
+            !parsedTasks.some(
+              existingTask =>
+                existingTask.title === cyclicTask.title &&
+                existingTask.date === day.toLocaleDateString('en-CA')
+            )
         )
-      }
-      const cyclicTasks = await AsyncStorage.getItem('cyclicTasks')
 
-      const todayWeekDay = day
-        .toLocaleDateString('en-US', { weekday: 'short' })
-        .toLowerCase() // np. 'mon'
-      const todayDate = day.getDate() // dzień miesiąca
-
-      if (cyclicTasks) {
-        const parsedCyclicTasks = JSON.parse(cyclicTasks)
-        parsedCyclicTasks.forEach((task: Task) => {
-          const baseDate = new Date(task.date)
-          const diffDays = Math.floor(
-            (day.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)
-          )
-          //@ts-ignore
-          switch (task.cyclic.type) {
-            case 0:
-              //@ts-ignore // co X dni
-              if (diffDays % task.cyclic.period === 0)
-                setTasks(prev => [...prev, task])
-
-              break
-
-            case 1:
-              //@ts-ignore // w określone dni tygodnia
-              if (task?.cyclic.weekDays?.includes(todayWeekDay as Day))
-                setTasks(prev => [...prev, task])
-
-              break
-
-            case 2:
-              //@ts-ignore // w określone dni miesiąca
-              if (task?.cyclic.monthDays?.includes(todayDate))
-                setTasks(prev => [...prev, task])
-
-              break
-          }
+        newCyclicTasks.forEach(task => {
+          task.date = day.toLocaleDateString('en-CA')
         })
+        console.log('🚀 ~ setCyclicInstance ~ newCyclicTasks:', newCyclicTasks)
+
+        const newTasks = [...parsedTasks, ...newCyclicTasks]
+        await AsyncStorage.setItem('tasks', JSON.stringify(newTasks))
+      } else {
+        // Jeśli nie ma zapisanych zadań, zapisujemy wszystkie z cyclicTasks
+        await AsyncStorage.setItem('tasks', JSON.stringify(cyclicTasks))
       }
-    })()
-  }, [day])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      ;(async () => {
+        const cyclicTasks = await AsyncStorage.getItem('cyclicTasks')
+
+        const todayWeekDay = day
+          .toLocaleDateString('en-US', { weekday: 'short' })
+          .toLowerCase() // np. 'mon'
+        const todayDate = day.getDate() // dzień miesiąca
+
+        if (cyclicTasks) {
+          const parsedCyclicTasks = JSON.parse(cyclicTasks)
+          const cyclicTasksForThatDay: CyclicTask[] = []
+
+          parsedCyclicTasks.forEach((task: CyclicTask) => {
+            const baseDate = new Date(task.date)
+            const diffDays = Math.floor(
+              (day.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)
+            )
+
+            switch (task.type) {
+              case 0:
+                //@ts-ignore // co X dni
+                if (diffDays % task.period === 0)
+                  //dodaj instancję do listy
+                  cyclicTasksForThatDay.push(task)
+
+                break
+
+              case 1:
+                // w określone dni tygodnia
+                if (task?.weekDays?.includes(todayWeekDay as Day))
+                  cyclicTasksForThatDay.push(task)
+
+                break
+
+              case 2:
+                // w określone dni miesiąca
+                if (task?.monthDays?.includes(todayDate))
+                  cyclicTasksForThatDay.push(task)
+
+                break
+            }
+          })
+          await setCyclicInstance(cyclicTasksForThatDay)
+        }
+
+        //*
+
+        const storedTasks = await AsyncStorage.getItem('tasks')
+        if (storedTasks) {
+          const parsedTasks = JSON.parse(storedTasks)
+          console.log('🚀 ~ ; ~ parsedTasks:', parsedTasks)
+          setTasks(
+            parsedTasks.filter(
+              (task: Task) => task.date === day.toLocaleDateString('en-CA')
+            )
+          )
+        }
+      })()
+    }, [day])
+  )
+
   return (
     <ScrollView
       contentContainerStyle={{ padding: 20 }}

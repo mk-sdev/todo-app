@@ -1,8 +1,8 @@
 import { CyclicTask, Task } from '@/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useState } from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { Button, ScrollView, StyleSheet, Text, View } from 'react-native'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
 export default function HomeScreen() {
@@ -107,6 +107,55 @@ export default function HomeScreen() {
     }, [day])
   )
 
+  function toggleTaskCompletion(title: string) {
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.title === title
+          ? {
+              ...task,
+              completed: !task.completed,
+              dateOfCompletion: !task.completed
+                ? new Date().toLocaleDateString("en-CA")
+                : null,
+            }
+          : task
+      )
+    )
+    toggleTaskCompletionAsync(title)
+  }
+
+  async function toggleTaskCompletionAsync(title: string) {
+    try {
+      const stored = await AsyncStorage.getItem('tasks')
+      if (!stored) return
+
+      const tasks = JSON.parse(stored)
+      const updatedTasks = tasks.map((task: Task) =>
+        task.title === title
+          ? {
+              ...task,
+              completed: !task.completed,
+              dateOfCompletion: !task.completed
+                ? new Date().toISOString()
+                : null,
+            }
+          : task
+      )
+
+      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks))
+    } catch (e) {
+      console.error('Błąd podczas zapisywania zadania:', e)
+    }
+  }
+  
+
+  useEffect(()=>{
+    (async()=>{
+
+    })()
+  }, [tasks])
+  
+
   return (
     <ScrollView
       contentContainerStyle={{ padding: 20 }}
@@ -131,7 +180,13 @@ export default function HomeScreen() {
         }
       />
       {tasks.map((task, index) => (
-        <View key={index} style={styles.stepContainer}>
+        <View
+          key={index}
+          style={[
+            styles.stepContainer,
+            { backgroundColor: task.completed ? '#d3ffd3' : '#fff' },
+          ]}
+        >
           <View style={styles.titleContainer}>
             <Text style={{ fontWeight: 'bold' }}>{task.title}</Text>
           </View>
@@ -139,6 +194,12 @@ export default function HomeScreen() {
           <Text>Priority: {task.priority}</Text>
           <Text>Date: {task.date}</Text>
           <Text>Time: {task.time}</Text>
+          <Button
+            title="zaznacz jako wykonane"
+            onPress={() => {
+              toggleTaskCompletion(task.title)
+            }}
+          ></Button>
         </View>
       ))}
     </ScrollView>

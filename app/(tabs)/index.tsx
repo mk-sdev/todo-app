@@ -1,7 +1,7 @@
 import { CyclicTask, Task } from '@/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
@@ -19,7 +19,7 @@ export default function HomeScreen() {
         const parsedTasks: Task[] = JSON.parse(storedTasks)
 
         // Dodaj tylko te zadania z cyclicTasks, których tytuły ORAZ daty nie występują w parsedTasks
-        const newCyclicTasks = cyclicTasks.filter(
+        const filteredCyclicTasks = cyclicTasks.filter(
           cyclicTask =>
             !parsedTasks.some(
               existingTask =>
@@ -28,12 +28,25 @@ export default function HomeScreen() {
             )
         )
 
-        newCyclicTasks.forEach(task => {
-          task.date = day.toLocaleDateString('en-CA')
-        })
-        console.log('🚀 ~ setCyclicInstance ~ newCyclicTasks:', newCyclicTasks)
+        const cyclicTasksInstances: Task[] = filteredCyclicTasks.map(
+          cyclicTask => ({
+            title: cyclicTask.title,
+            difficulty: cyclicTask.difficulty,
+            priority: cyclicTask.priority,
+            date: day.toLocaleDateString('en-CA'),
+            time: cyclicTask.time,
+            completed: false,
+            dateOfCompletion: null,
+            parent: cyclicTask.title,
+          })
+        )
 
-        const newTasks = [...parsedTasks, ...newCyclicTasks]
+        console.log(
+          '🚀 ~ setCyclicInstance ~ newCyclicTasks:',
+          filteredCyclicTasks
+        )
+
+        const newTasks = [...parsedTasks, ...cyclicTasksInstances]
         await AsyncStorage.setItem('tasks', JSON.stringify(newTasks))
       } else {
         // Jeśli nie ma zapisanych zadań, zapisujemy wszystkie z cyclicTasks
@@ -47,6 +60,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       ;(async () => {
+        //** sprawdza czy na dany dzień wypadają jakies zadania cykliczne */
         const cyclicTasks = await AsyncStorage.getItem('cyclicTasks')
 
         const todayWeekDay = day
@@ -88,24 +102,87 @@ export default function HomeScreen() {
                 break
             }
           })
+          //** jeśli wypadają, to są tworzone ich instancje z odpowiednią datą, o ile nie zostały już wcześniej utworzone */
           await setCyclicInstance(cyclicTasksForThatDay)
         }
 
-        //*
-
+        //* tutaj tworzony jest stan zadań do wyświetlenia dla usera
         const storedTasks = await AsyncStorage.getItem('tasks')
         if (storedTasks) {
           const parsedTasks = JSON.parse(storedTasks)
-          console.log('🚀 ~ ; ~ parsedTasks:', parsedTasks)
-          setTasks(
-            parsedTasks.filter(
-              (task: Task) => task.date === day.toLocaleDateString('en-CA')
-            )
+
+          // stare zadania, czyli z datą wcześniejszą niż dziś
+          const oldTasks = parsedTasks.filter(
+            (task: Task) => task.date < new Date().toLocaleDateString('en-CA')
           )
+
+          // zaległe zadania do wyświetlenia
+          const overdueTasks = oldTasks.filter(
+            (task: Task) =>
+              (!task.dateOfCompletion &&
+                day.toLocaleDateString('en-CA') ===
+                  new Date().toLocaleDateString('en-CA')) ||
+              task.dateOfCompletion === day.toLocaleDateString('en-CA')
+          )
+
+          //? co jak zaległe zadanie jest cykliczne?
+          // zadania z daną datą (cykliczne i zwykłe) + zaległe do wyświetlenia
+          const tasksState = [
+            ...overdueTasks,
+            ...parsedTasks.filter(
+              (task: Task) => task.date === day.toLocaleDateString('en-CA')
+            ),
+          ]
+          // jeśli zaległe były takie same jak zaplanowane na dziś to nie duplikuj
+          const uniqueTasksState = Array.from(
+            new Map(tasksState.map(task => [task.title, task])).values()
+          )
+
+          setTasks(uniqueTasksState)
+          oldTasks.forEach((task: Task) => {
+            console.log(
+              'tytul, data wykonania',
+              task.title,
+              task.dateOfCompletion
+            )
+          })
+
+          // zadania wykonane w przeszłości
+          const tasksToRemove = oldTasks.filter(
+            (task: Task) =>
+              (task.dateOfCompletion &&
+                task.dateOfCompletion <
+                  new Date().toLocaleDateString('en-CA')) ||
+              (uniqueTasksState.some(t => t.title === task.title) &&
+                task.parent !== null)
+          )
+          //jeśli dobrze myślę to overdueTasks + tasksToRemove = oldTasks
+          removeTasks(tasksToRemove)
         }
       })()
     }, [day])
   )
+
+  async function removeTasks(tasksToRemove: Task[]) {
+    console.log('🚀 ~ do usunięcia:')
+    tasksToRemove.forEach(task => {
+      console.log(task.title, task.date)
+    })
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks')
+      if (!storedTasks) return
+
+      const parsedTasks: Task[] = JSON.parse(storedTasks)
+
+      const updatedTasks = parsedTasks.filter(
+        task => !tasksToRemove.some(toRemove => toRemove.title === task.title)
+      )
+
+      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks))
+    } catch (error) {
+      console.error('Error removing tasks:', error)
+    }
+  }
 
   function toggleTaskCompletion(title: string) {
     setTasks(prevTasks =>
@@ -115,7 +192,7 @@ export default function HomeScreen() {
               ...task,
               completed: !task.completed,
               dateOfCompletion: !task.completed
-                ? new Date().toLocaleDateString("en-CA")
+                ? new Date().toLocaleDateString('en-CA')
                 : null,
             }
           : task
@@ -136,7 +213,7 @@ export default function HomeScreen() {
               ...task,
               completed: !task.completed,
               dateOfCompletion: !task.completed
-                ? new Date().toISOString()
+                ? new Date().toLocaleDateString('en-CA')
                 : null,
             }
           : task
@@ -147,14 +224,6 @@ export default function HomeScreen() {
       console.error('Błąd podczas zapisywania zadania:', e)
     }
   }
-  
-
-  useEffect(()=>{
-    (async()=>{
-
-    })()
-  }, [tasks])
-  
 
   return (
     <ScrollView
@@ -166,7 +235,7 @@ export default function HomeScreen() {
         mode={'date'}
         locale="pl-PL"
         style={{ fontSize: 20, fontWeight: 'bold' }}
-        minimumDate={new Date()}
+        // minimumDate={new Date()}
         onChange={(value: Date) => {
           setDay(value)
         }}
@@ -190,6 +259,10 @@ export default function HomeScreen() {
           <View style={styles.titleContainer}>
             <Text style={{ fontWeight: 'bold' }}>{task.title}</Text>
           </View>
+          {task.date < day.toLocaleDateString('en-CA') && (
+            <Text style={{ backgroundColor: 'red' }}>zaległe</Text>
+          )}
+          {/* <Text>{task.date } ||| { day.toLocaleDateString('en-CA')}</Text> */}
           <Text>Difficulty: {task.difficulty}</Text>
           <Text>Priority: {task.priority}</Text>
           <Text>Date: {task.date}</Text>

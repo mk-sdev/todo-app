@@ -4,12 +4,7 @@ import { CyclicTask, Task } from '@/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import {
-  Button,
-  FlatList,
-  ScrollView,
-  StyleSheet
-} from 'react-native'
+import { Button, FlatList, ScrollView, StyleSheet, View } from 'react-native'
 
 export default function CyclicTasksScreen() {
   const [cyclicTasks, setCyclicTasks] = useState<CyclicTask[]>([])
@@ -98,12 +93,28 @@ export default function CyclicTasksScreen() {
       <FlatList
         data={allTasks}
         renderItem={({ item }) => (
-          <ThemedView>
-            <ThemedText>{item.title}</ThemedText>
-            <ThemedText>{item.difficulty}</ThemedText>
-            <ThemedText>{item.priority}</ThemedText>
-            <ThemedText>{item.date}</ThemedText>
-            <ThemedText>{item.time}</ThemedText>
+          <ThemedView
+            style={[
+              {
+                gap: 8,
+                marginBottom: 18,
+                borderBottomWidth: 1,
+                borderRadius: 10,
+                overflow: 'hidden',
+                padding: 10,
+              },
+            ]}
+          >
+            <View style={styles.titleContainer}>
+              <ThemedText style={{ fontWeight: 'bold', fontSize: 15 }}>
+                {item.date}
+              </ThemedText>
+              <ThemedText style={{ fontWeight: 'bold', fontSize: 20 }}>
+                {item.title}
+              </ThemedText>
+            </View>
+            {/* <ThemedText>Difficulty: {item.difficulty}</ThemedText>
+            <ThemedText>Priority: {item.priority}</ThemedText> */}
           </ThemedView>
         )}
         keyExtractor={item => item.title}
@@ -127,7 +138,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   titleContainer: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     gap: 8,
   },
 })

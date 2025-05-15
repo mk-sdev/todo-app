@@ -5,16 +5,15 @@ import {
   Button,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
+  TextInput
 } from 'react-native'
 
 import NewCyclic from '@/components/NewCyclic'
+import { ThemedText } from '@/components/ThemedText'
 import Slider from 'react-native-ui-lib/slider'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 import Switch from 'react-native-ui-lib/switch'
 import { CyclicTask, Day, Task } from '../../types'
-import { ThemedText } from '@/components/ThemedText'
 
 export default function NewTaskScreen() {
   const [title, setTitle] = useState<string>('')
@@ -141,7 +140,7 @@ export default function NewTaskScreen() {
         mode={'date'}
         locale="pl-PL"
         style={{ fontSize: 20, fontWeight: 'bold', color: 'silver' }}
-        minimumDate={new Date()}
+        //minimumDate={new Date()}
         onChange={value => {
           setDate(value)
         }}

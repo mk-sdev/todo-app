@@ -7,17 +7,16 @@ import {
   getTasksState,
   getTasksToRemove,
   removeTasks,
-  toggleTaskCompletionAsync
+  toggleTaskCompletionAsync,
 } from '@/functions'
 import { Task } from '@/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Button, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Button, ScrollView, StyleSheet } from 'react-native'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
 export default function HomeScreen() {
-  type Day = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
   const [tasks, setTasks] = useState<Task[]>([])
   const [day, setDay] = useState<Date>(new Date())
   // AsyncStorage.clear()
@@ -80,6 +79,31 @@ export default function HomeScreen() {
     toggleTaskCompletionAsync(title)
   }
 
+  function handleDelete(taskToDelete: Task) {
+    // 1. Usuń z lokalnego stanu
+    setTasks(prevTasks =>
+      prevTasks.filter(task => task.title !== taskToDelete.title)
+    )
+
+    // 2. Usuń z AsyncStorage
+    AsyncStorage.getItem('tasks')
+      .then(stored => {
+        if (!stored) return
+        const parsed: Task[] = JSON.parse(stored)
+        const updated = parsed.filter(
+          task =>
+            !(
+              task.title === taskToDelete.title &&
+              task.date === taskToDelete.date
+            )
+        )
+        return AsyncStorage.setItem('tasks', JSON.stringify(updated))
+      })
+      .catch(err => {
+        console.error('Błąd przy usuwaniu zadania:', err)
+      })
+  }
+
   return (
     <ScrollView
       contentContainerStyle={{ padding: 20 }}
@@ -114,6 +138,19 @@ export default function HomeScreen() {
           <ThemedView style={styles.titleContainer}>
             <ThemedText style={{ fontWeight: 'bold' }}>{task.title}</ThemedText>
           </ThemedView>
+          <ThemedText
+            style={{
+              position: 'absolute',
+              padding: 10,
+              alignSelf: 'flex-end',
+              backgroundColor: 'red',
+            }}
+            onPress={() => {
+              handleDelete(task)
+            }}
+          >
+            Usun
+          </ThemedText>
           {task.date < day.toLocaleDateString('en-CA') && (
             <ThemedText style={{ backgroundColor: 'red' }}>zaległe</ThemedText>
           )}

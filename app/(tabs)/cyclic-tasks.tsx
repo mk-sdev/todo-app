@@ -1,3 +1,5 @@
+import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ThemedView'
 import { CyclicTask } from '@/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
@@ -24,13 +26,13 @@ export default function CyclicTasksScreen() {
       <FlatList
         data={cyclicTasks}
         renderItem={({ item }) => (
-          <View>
-            <Text>{item.title}</Text>
-            <Text>{item.difficulty}</Text>
-            <Text>{item.priority}</Text>
-            <Text>{item.date}</Text>
-            <Text>{item.time}</Text>
-          </View>
+          <ThemedView>
+            <ThemedText>{item.title}</ThemedText>
+            <ThemedText>{item.difficulty}</ThemedText>
+            <ThemedText>{item.priority}</ThemedText>
+            <ThemedText>{item.date}</ThemedText>
+            <ThemedText>{item.time}</ThemedText>
+          </ThemedView>
         )}
         keyExtractor={(item) => item.title}
       />

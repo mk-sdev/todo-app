@@ -5,6 +5,7 @@ import RadioButton from 'react-native-ui-lib/radioButton'
 import RadioGroup from 'react-native-ui-lib/radioGroup'
 import Slider from 'react-native-ui-lib/slider'
 import Checkbox from 'react-native-ui-lib/src/components/checkbox'
+import { ThemedText } from './ThemedText'
 
 export default function NewCyclic({
   cyclicType,
@@ -35,21 +36,24 @@ export default function NewCyclic({
   return (
     <>
       <View>
-        <Text style={styles.text}>Jak często?</Text>
+        <ThemedText style={styles.text}>Jak często?</ThemedText>
         <RadioGroup initialValue={0} style={{ gap: 10, paddingTop: 20 }}>
           <RadioButton
             label="Co X dni"
+            labelStyle={{ color: 'white' }}
             value={0}
             selected
             onPress={() => setCyclicType(0)}
           />
           <RadioButton
             label="W określone dni tygodnia"
+            labelStyle={{ color: 'white' }}
             value={1}
             onPress={() => setCyclicType(1)}
           />
           <RadioButton
             label="W określone dni miesiąca"
+            labelStyle={{ color: 'white' }}
             value={2}
             onPress={() => setCyclicType(2)}
           />
@@ -69,9 +73,9 @@ export default function NewCyclic({
               minimumTrackTintColor="#FFFFFF"
               maximumTrackTintColor="#000000"
             />
-            <Text style={styles.text}>
+            <ThemedText style={styles.text}>
               {period === 1 ? 'codziennie' : 'co ' + period + ' dni'}
-            </Text>
+            </ThemedText>
           </>
         )}
         {cyclicType === 1 && (
@@ -83,13 +87,14 @@ export default function NewCyclic({
                 value={weekDays.includes(key as any)}
                 onValueChange={() => toggleDay(key)}
                 marginB-10
+                labelStyle={{ color: 'white' }}
               />
             ))}
           </>
         )}
         {cyclicType === 2 && (
           <>
-            <Text>Wybierz dni miesiąca</Text>
+            <ThemedText>Wybierz dni miesiąca</ThemedText>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {Array.from({ length: 31 }, (_, i) => (
                 <Checkbox
@@ -104,6 +109,7 @@ export default function NewCyclic({
                     )
                   }
                   marginB-5
+                  labelStyle={{ color: 'white' }}
                 />
               ))}
             </View>

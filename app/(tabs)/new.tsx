@@ -6,7 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput
+  TextInput,
 } from 'react-native'
 
 import NewCyclic from '@/components/NewCyclic'
@@ -14,6 +14,7 @@ import Slider from 'react-native-ui-lib/slider'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 import Switch from 'react-native-ui-lib/switch'
 import { CyclicTask, Day, Task } from '../../types'
+import { ThemedText } from '@/components/ThemedText'
 
 export default function NewTaskScreen() {
   const [title, setTitle] = useState<string>('')
@@ -129,23 +130,17 @@ export default function NewTaskScreen() {
     setMonthDays([])
     setWeekDays([])
   }
-  
+
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 20, gap: 20, paddingTop: 40 }}
+      contentContainerStyle={{ padding: 20, gap: 20, paddingTop: 70 }}
       keyboardShouldPersistTaps="handled"
     >
-      <TextInput
-        value={title}
-        style={{ fontSize: 20 }}
-        placeholder="wpisz tytuł zadania"
-        onChangeText={value => setTitle(value)}
-      ></TextInput>
       <DateTimePicker
         value={date}
         mode={'date'}
         locale="pl-PL"
-        style={{ fontSize: 20, fontWeight: 'bold' }}
+        style={{ fontSize: 20, fontWeight: 'bold', color: 'silver' }}
         minimumDate={new Date()}
         onChange={value => {
           setDate(value)
@@ -159,8 +154,15 @@ export default function NewTaskScreen() {
           })
         }
       />
+      <TextInput
+        value={title}
+        style={{ fontSize: 30, color: 'silver' }}
+        placeholder="wpisz tytuł zadania"
+        placeholderTextColor={'dimgray'}
+        onChangeText={value => setTitle(value)}
+      ></TextInput>
 
-      <Text style={styles.text}>Czy ustawić godzinę?</Text>
+      <ThemedText style={styles.text}>Czy ustawić godzinę?</ThemedText>
       <Switch
         value={isTime}
         onValueChange={() => setIsTime(prev => !prev)}
@@ -183,7 +185,9 @@ export default function NewTaskScreen() {
         />
       )}
 
-      <Text style={styles.text}>Ustaw poziom trudności: {difficulty}</Text>
+      <ThemedText style={styles.text}>
+        Ustaw poziom trudności: {difficulty}
+      </ThemedText>
       <Slider
         style={{ width: 200, height: 40 }}
         minimumValue={0}
@@ -194,7 +198,7 @@ export default function NewTaskScreen() {
         minimumTrackTintColor="#FFFFFF"
         maximumTrackTintColor="#000000"
       />
-      <Text style={styles.text}>Ustaw priorytet: {priority}</Text>
+      <ThemedText style={styles.text}>Ustaw priorytet: {priority}</ThemedText>
       <Slider
         style={{ width: 200, height: 40 }}
         minimumValue={0}
@@ -205,7 +209,7 @@ export default function NewTaskScreen() {
         minimumTrackTintColor="#FFFFFF"
         maximumTrackTintColor="#000000"
       />
-      <Text style={styles.text}>Czy zadanie jest cykliczne?</Text>
+      <ThemedText style={styles.text}>Czy zadanie jest cykliczne?</ThemedText>
       <Switch
         value={isCyclic}
         onValueChange={() => setIsCyclic(prev => !prev)}

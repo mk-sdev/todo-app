@@ -1,3 +1,5 @@
+import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ThemedView'
 import {
   checkCyclicTasks,
   getOldTasks,
@@ -87,7 +89,7 @@ export default function HomeScreen() {
         value={day}
         mode={'date'}
         locale="pl-PL"
-        style={{ fontSize: 20, fontWeight: 'bold' }}
+        style={{ fontSize: 20, fontWeight: 'bold', color: 'silver' }}
         // minimumDate={new Date()}
         onChange={(value: Date) => {
           setDay(value)
@@ -102,31 +104,31 @@ export default function HomeScreen() {
         }
       />
       {tasks.map((task, index) => (
-        <View
+        <ThemedView
           key={index}
           style={[
             styles.stepContainer,
-            { backgroundColor: task.completed ? '#d3ffd3' : '#fff' },
+            { backgroundColor: task.completed ? 'green' : '#171717' },
           ]}
         >
-          <View style={styles.titleContainer}>
-            <Text style={{ fontWeight: 'bold' }}>{task.title}</Text>
-          </View>
+          <ThemedView style={styles.titleContainer}>
+            <ThemedText style={{ fontWeight: 'bold' }}>{task.title}</ThemedText>
+          </ThemedView>
           {task.date < day.toLocaleDateString('en-CA') && (
-            <Text style={{ backgroundColor: 'red' }}>zaległe</Text>
+            <ThemedText style={{ backgroundColor: 'red' }}>zaległe</ThemedText>
           )}
           {/* <Text>{task.date } ||| { day.toLocaleDateString('en-CA')}</Text> */}
-          <Text>Difficulty: {task.difficulty}</Text>
-          <Text>Priority: {task.priority}</Text>
-          <Text>Date: {task.date}</Text>
-          <Text>Time: {task.time}</Text>
+          <ThemedText>Difficulty: {task.difficulty}</ThemedText>
+          <ThemedText>Priority: {task.priority}</ThemedText>
+          <ThemedText>Date: {task.date}</ThemedText>
+          <ThemedText>Time: {task.time}</ThemedText>
           <Button
             title="zaznacz jako wykonane"
             onPress={() => {
               toggleTaskCompletion(task.title)
             }}
           ></Button>
-        </View>
+        </ThemedView>
       ))}
     </ScrollView>
   )

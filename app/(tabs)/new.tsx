@@ -6,15 +6,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  View,
+  TextInput
 } from 'react-native'
 
+import NewCyclic from '@/components/NewCyclic'
 import Slider from 'react-native-ui-lib/slider'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 import Switch from 'react-native-ui-lib/switch'
-import { Day, Task, CyclicTask } from '../../types'
-import NewCyclic from '@/components/NewCyclic'
+import { CyclicTask, Day, Task } from '../../types'
 
 export default function NewTaskScreen() {
   const [title, setTitle] = useState<string>('')
@@ -119,7 +118,7 @@ export default function NewTaskScreen() {
     }
   }
 
-  function reset(){
+  function reset() {
     setTitle('')
     setDifficulty(0)
     setPriority(0)
@@ -130,10 +129,11 @@ export default function NewTaskScreen() {
     setMonthDays([])
     setWeekDays([])
   }
-
+  
   return (
     <ScrollView
       contentContainerStyle={{ padding: 20, gap: 20, paddingTop: 40 }}
+      keyboardShouldPersistTaps="handled"
     >
       <TextInput
         value={title}
@@ -174,7 +174,7 @@ export default function NewTaskScreen() {
           onChange={value => {
             setTime(value)
           }}
-          dateTimeFormatter={date =>
+          dateTimeFormatter={time =>
             time.toLocaleString('pl-PL', {
               hour: '2-digit',
               minute: '2-digit',

@@ -116,8 +116,23 @@ export default function HomeScreen() {
     ])
   }
 
+  function random() {
+    const randomIndex = Math.floor(Math.random() * tasks.length)
+    const randomTask = tasks[randomIndex]
+    Alert.alert(
+      'Wylosowane zadanie',
+      `Tytuł: ${randomTask.title}\nData: ${randomTask.date}\nCzas: ${randomTask.time}`,
+      [
+        {
+          text: 'OK',
+          onPress: () => console.log('OK Pressed'),
+        },
+      ]
+    )
+  }
+
   return (
-    <View style={{ marginTop: 60, padding: 10 }}>
+    <View style={{ marginTop: 55, padding: 10, flex: 1 }}>
       <DateTimePicker
         value={day}
         mode={'date'}
@@ -128,6 +143,7 @@ export default function HomeScreen() {
           fontWeight: 'bold',
           color: 'silver',
           marginBottom: 20,
+          marginTop: 10,
         }}
         // minimumDate={new Date()}
         onChange={(value: Date) => {
@@ -144,7 +160,7 @@ export default function HomeScreen() {
       />
       <FlatList
         data={tasks}
-        style={{ marginBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
         keyExtractor={(item, index) => `${item.title}-${index}`} // lepiej użyć unikalnego id, jeśli masz
         renderItem={({ item: task }) => (
           <Pressable onPress={() => toggleTaskCompletion(task.title)}>
@@ -200,6 +216,32 @@ export default function HomeScreen() {
           </Pressable>
         )}
       />
+      {tasks.length > 1 && (
+        <Pressable
+          style={{
+            padding: 10,
+            height: 50,
+            backgroundColor: '#5846c7',
+            borderRadius: 10,
+            position: 'absolute',
+            bottom: 20,
+            width: '100%',
+            left: 10,
+          }}
+          onPress={() => random()}
+        >
+          <ThemedText
+            style={{
+              fontSize: 20,
+              alignSelf: 'center',
+              fontWeight: 'bold',
+              lineHeight: 30,
+            }}
+          >
+            Losuj zadanie
+          </ThemedText>
+        </Pressable>
+      )}
     </View>
   )
 }

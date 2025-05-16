@@ -40,20 +40,20 @@ export default function NewCyclic({
         <RadioGroup initialValue={0} style={{ gap: 10, paddingTop: 20 }}>
           <RadioButton
             label="Co X dni"
-            labelStyle={{ color: 'white' }}
+            labelStyle={{ color: 'white', fontSize: 20 }}
             value={0}
             selected
             onPress={() => setCyclicType(0)}
           />
           <RadioButton
             label="W określone dni tygodnia"
-            labelStyle={{ color: 'white' }}
+            labelStyle={{ color: 'white', fontSize: 20 }}
             value={1}
             onPress={() => setCyclicType(1)}
           />
           <RadioButton
             label="W określone dni miesiąca"
-            labelStyle={{ color: 'white' }}
+            labelStyle={{ color: 'white', fontSize: 20 }}
             value={2}
             onPress={() => setCyclicType(2)}
           />
@@ -70,8 +70,8 @@ export default function NewCyclic({
               value={period}
               onValueChange={value => setPeriod(value)}
               step={1} //? is it default?
-              minimumTrackTintColor="#FFFFFF"
-              maximumTrackTintColor="#000000"
+              minimumTrackTintColor="#ccc"
+              maximumTrackTintColor="#303030"
             />
             <ThemedText style={styles.text}>
               {period === 1 ? 'codziennie' : 'co ' + period + ' dni'}
@@ -87,14 +87,14 @@ export default function NewCyclic({
                 value={weekDays.includes(key as any)}
                 onValueChange={() => toggleDay(key)}
                 marginB-10
-                labelStyle={{ color: 'white' }}
+                labelStyle={{ color: 'white', fontSize: 25, lineHeight: 40 }}
               />
             ))}
           </>
         )}
         {cyclicType === 2 && (
           <>
-            <ThemedText>Wybierz dni miesiąca</ThemedText>
+            <ThemedText style={{fontSize: 20, marginBottom: 20}}>Wybierz dni miesiąca</ThemedText>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {Array.from({ length: 31 }, (_, i) => (
                 <Checkbox
@@ -109,7 +109,7 @@ export default function NewCyclic({
                     )
                   }
                   marginB-5
-                  labelStyle={{ color: 'white' }}
+                  labelStyle={{ color: 'white', fontSize:20, width: 30 }}
                 />
               ))}
             </View>

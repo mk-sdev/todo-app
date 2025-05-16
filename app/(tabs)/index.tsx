@@ -117,8 +117,13 @@ export default function HomeScreen() {
   }
 
   function random() {
-    const randomIndex = Math.floor(Math.random() * tasks.length)
-    const randomTask = tasks[randomIndex]
+    const randomIndex = Math.floor(
+      Math.random() *
+        tasks.filter((task: Task) => task.dateOfCompletion === null).length
+    )
+    const randomTask = tasks.filter(
+      (task: Task) => task.dateOfCompletion === null
+    )[randomIndex]
     Alert.alert(
       'Wylosowane zadanie',
       `Tytuł: ${randomTask.title}\nData: ${randomTask.date}\nCzas: ${randomTask.time}`,
@@ -164,7 +169,8 @@ export default function HomeScreen() {
         handleDelete={handleDelete}
         toggleTaskCompletion={toggleTaskCompletion}
       ></TaskList>
-      {tasks.length > 1 && (
+      {tasks.filter((task: Task) => task.dateOfCompletion === null).length >
+        1 && (
         <Pressable
           style={{
             padding: 10,

@@ -1,5 +1,5 @@
+import TaskList from '@/components/TaskList'
 import { ThemedText } from '@/components/ThemedText'
-import { ThemedView } from '@/components/ThemedView'
 import {
   checkCyclicTasks,
   getOldTasks,
@@ -10,11 +10,11 @@ import {
   toggleTaskCompletionAsync,
 } from '@/functions'
 import { Task } from '@/types'
-import Feather from '@expo/vector-icons/Feather'
+
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, View } from 'react-native'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
 export default function HomeScreen() {
@@ -158,64 +158,12 @@ export default function HomeScreen() {
           })
         }
       />
-      <FlatList
-        data={tasks}
-        contentContainerStyle={{ paddingBottom: 60 }}
-        keyExtractor={(item, index) => `${item.title}-${index}`} // lepiej użyć unikalnego id, jeśli masz
-        renderItem={({ item: task }) => (
-          <Pressable onPress={() => toggleTaskCompletion(task.title)}>
-            <ThemedView
-              style={[
-                styles.stepContainer,
-                { opacity: task.completed ? 0.3 : 1 },
-                {
-                  borderWidth: 1,
-                  borderColor:
-                    task.date < day.toLocaleDateString('en-CA')
-                      ? 'tomato'
-                      : 'transparent',
-                },
-              ]}
-            >
-              <View style={styles.titleContainer}>
-                <ThemedText>
-                  <ThemedText style={{ fontWeight: 'bold', fontSize: 25 }}>
-                    {task.title}
-                  </ThemedText>
-                  <ThemedText
-                    style={{
-                      fontWeight: 'bold',
-                      fontSize: 20,
-                      color:
-                        task.date < day.toLocaleDateString('en-CA')
-                          ? 'tomato'
-                          : 'white',
-                    }}
-                  >
-                    {' •'} {task.date} {task.time ? ` • ${task.time}` : ''}
-                  </ThemedText>
-                </ThemedText>
-              </View>
-              <ThemedText>Difficulty: {task.difficulty}</ThemedText>
-              <ThemedText>Priority: {task.priority}</ThemedText>
-              <Feather
-                name="trash-2"
-                size={24}
-                color="white"
-                onPress={() => handleDelete(task)}
-                style={{
-                  position: 'absolute',
-                  padding: 10,
-                  alignSelf: 'flex-end',
-                  backgroundColor: 'crimson',
-                  bottom: 0,
-                  borderTopLeftRadius: 10,
-                }}
-              />
-            </ThemedView>
-          </Pressable>
-        )}
-      />
+      <TaskList
+        tasks={tasks}
+        day={day}
+        handleDelete={handleDelete}
+        toggleTaskCompletion={toggleTaskCompletion}
+      ></TaskList>
       {tasks.length > 1 && (
         <Pressable
           style={{
@@ -245,26 +193,3 @@ export default function HomeScreen() {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 18,
-    borderBottomWidth: 1,
-    borderRadius: 10,
-    overflow: 'hidden',
-    padding: 10,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-})

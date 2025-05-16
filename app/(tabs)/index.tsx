@@ -14,12 +14,7 @@ import Feather from '@expo/vector-icons/Feather'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  View
-} from 'react-native'
+import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 
 export default function HomeScreen() {
@@ -86,28 +81,39 @@ export default function HomeScreen() {
   }
 
   function handleDelete(taskToDelete: Task) {
-    // 1. Usuń z lokalnego stanu
-    setTasks(prevTasks =>
-      prevTasks.filter(task => task.title !== taskToDelete.title)
-    )
+    Alert.alert('Usunąć zadanie?', '', [
+      {
+        text: 'Anuluj',
+        style: 'cancel',
+      },
+      {
+        text: 'Tak',
+        onPress: () => {
+          // 1. Usuń z lokalnego stanu
+          setTasks(prevTasks =>
+            prevTasks.filter(task => task.title !== taskToDelete.title)
+          )
 
-    // 2. Usuń z AsyncStorage
-    AsyncStorage.getItem('tasks')
-      .then(stored => {
-        if (!stored) return
-        const parsed: Task[] = JSON.parse(stored)
-        const updated = parsed.filter(
-          task =>
-            !(
-              task.title === taskToDelete.title &&
-              task.date === taskToDelete.date
-            )
-        )
-        return AsyncStorage.setItem('tasks', JSON.stringify(updated))
-      })
-      .catch(err => {
-        console.error('Błąd przy usuwaniu zadania:', err)
-      })
+          // 2. Usuń z AsyncStorage
+          AsyncStorage.getItem('tasks')
+            .then(stored => {
+              if (!stored) return
+              const parsed: Task[] = JSON.parse(stored)
+              const updated = parsed.filter(
+                task =>
+                  !(
+                    task.title === taskToDelete.title &&
+                    task.date === taskToDelete.date
+                  )
+              )
+              return AsyncStorage.setItem('tasks', JSON.stringify(updated))
+            })
+            .catch(err => {
+              console.error('Błąd przy usuwaniu zadania:', err)
+            })
+        },
+      },
+    ])
   }
 
   return (

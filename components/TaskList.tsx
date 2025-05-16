@@ -62,19 +62,23 @@ export default function TaskList({
             >
               {task.title}
             </ThemedText>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <ThemedText>
-                priorytet:
-                <ThemedText style={{ fontWeight: 'bold' }}>
-                  {' ' + task.priority}
-                </ThemedText>
-              </ThemedText>
-              <ThemedText>
-                trudność:
-                <ThemedText style={{ fontWeight: 'bold' }}>
-                  {' ' + task.difficulty}
-                </ThemedText>
-              </ThemedText>
+            <View style={{ flexDirection: 'row', gap: 10, minHeight: 20 }}>
+              {(task.priority || task.difficulty) && (
+                <>
+                  <ThemedText style={{ paddingVertical: 10 }}>
+                    priorytet:
+                    <ThemedText style={{ fontWeight: 'bold' }}>
+                      {' ' + task.priority}
+                    </ThemedText>
+                  </ThemedText>
+                  <ThemedText style={{ paddingVertical: 10 }}>
+                    trudność:
+                    <ThemedText style={{ fontWeight: 'bold' }}>
+                      {' ' + task.difficulty}
+                    </ThemedText>
+                  </ThemedText>
+                </>
+              )}
             </View>
             <ThemedText
               style={{

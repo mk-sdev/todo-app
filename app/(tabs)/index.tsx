@@ -137,7 +137,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={{ marginTop: 55, padding: 10, flex: 1 }}>
+    <View style={{ marginTop: 50, padding: 20, flex: 1 }}>
       <DateTimePicker
         value={day}
         mode={'date'}
@@ -147,8 +147,8 @@ export default function HomeScreen() {
           fontSize: 20,
           fontWeight: 'bold',
           color: 'silver',
-          marginBottom: 20,
-          marginTop: 10,
+          marginBottom: 30,
+          // marginTop: 10,
         }}
         // minimumDate={new Date()}
         onChange={(value: Date) => {

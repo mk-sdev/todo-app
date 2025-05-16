@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
 import { CyclicTask, Task } from '@/types'
+import Feather from '@expo/vector-icons/Feather'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
@@ -31,7 +32,6 @@ export default function CyclicTasksScreen() {
   )
 
   function handleDelete(taskToDelete: CyclicTask) {
-    //TODO powinny się też usuwać taski w tasks których rodzicem jest dany cykliczny
     // 1. Usuń z lokalnego stanu
     setCyclicTasks(prevTasks =>
       prevTasks.filter(task => task.title !== taskToDelete.title)
@@ -48,33 +48,76 @@ export default function CyclicTasksScreen() {
       .catch(err => {
         console.error('Błąd przy usuwaniu zadania:', err)
       })
+
+    // 3. Usuń z AsyncStorage tasks
+    AsyncStorage.getItem('tasks')
+      .then(stored => {
+        if (!stored) return
+        const parsed: Task[] = JSON.parse(stored)
+        const updated = parsed.filter(task => task.parent !== taskToDelete.title)
+        return AsyncStorage.setItem('tasks', JSON.stringify(updated))
+      })
+      .catch(err => {
+        console.error('Błąd przy usuwaniu zadania:', err)
+      })
   }
 
   return (
     <ScrollView style={{ marginTop: 100 }}>
       {cyclicTasks.map(item => (
-        <ThemedView key={item.title} style={{ padding: 10 }}>
-          <ThemedText
-            style={{
-              backgroundColor: 'red',
-              padding: 10,
-              position: 'absolute',
-              right: 0,
-            }}
-            onPress={() => handleDelete(item)}
-          >
-            usun
+        <ThemedView
+          key={item.title}
+          style={[styles.stepContainer, { padding: 10 }]}
+        >
+          <ThemedText style={{ fontWeight: 'bold', fontSize: 25 }}>
+            {item.title}
           </ThemedText>
-          <Button
-            title="usun"
-            color="red"
+          <View style={{ flexDirection: 'row', gap: 10, minHeight: 20 }}>
+            {item.type === 0 && (
+              <ThemedText style={{ paddingVertical: 10 }}>
+                co ile dni:
+                <ThemedText style={{ fontWeight: 'bold' }}>
+                  {' ' + item.period}
+                </ThemedText>
+              </ThemedText>
+            )}
+
+            {item.type === 1 && (
+              <ThemedText style={{ paddingVertical: 10 }}>
+                dni tygodnia:
+                <ThemedText style={{ fontWeight: 'bold' }}>
+                  {' ' + item.weekDays?.map(weekDay => weekDay).join(', ')}
+                </ThemedText>
+              </ThemedText>
+            )}
+
+            {item.type === 2 && (
+              <ThemedText style={{ paddingVertical: 10 }}>
+                dni miesiąca:
+                <ThemedText style={{ fontWeight: 'bold' }}>
+                  {' ' + item.monthDays?.map(monthDay => monthDay).join(', ')}
+                </ThemedText>
+              </ThemedText>
+            )}
+          </View>
+          <ThemedText style={{ fontWeight: 'bold', fontSize: 20 }}>
+            {item.date} {item.time ? ` • ${item.time}` : ''}
+          </ThemedText>
+
+          <Feather
+            name="trash-2"
+            size={24}
+            color="white"
             onPress={() => handleDelete(item)}
-          ></Button>
-          <ThemedText>{item.title}</ThemedText>
-          <ThemedText>{item.difficulty}</ThemedText>
-          <ThemedText>{item.priority}</ThemedText>
-          <ThemedText>{item.date}</ThemedText>
-          <ThemedText>{item.time}</ThemedText>
+            style={{
+              position: 'absolute',
+              padding: 10,
+              alignSelf: 'flex-end',
+              backgroundColor: 'crimson',
+              bottom: 0,
+              borderTopLeftRadius: 10,
+            }}
+          />
         </ThemedView>
       ))}
 
@@ -89,7 +132,7 @@ export default function CyclicTasksScreen() {
           })()
         }}
       ></Button>
-      <ThemedText>Wszystkie:</ThemedText>
+
       <FlatList
         data={allTasks}
         renderItem={({ item }) => (
@@ -113,19 +156,10 @@ export default function CyclicTasksScreen() {
                 {item.title}
               </ThemedText>
             </View>
-            {/* <ThemedText>Difficulty: {item.difficulty}</ThemedText>
-            <ThemedText>Priority: {item.priority}</ThemedText> */}
           </ThemedView>
         )}
         keyExtractor={item => item.title}
       />
-      <Button
-        title="clear storage"
-        onPress={async () => {
-          await AsyncStorage.clear()
-          console.log('🚀 ~ AsyncStorage.clear():')
-        }}
-      ></Button>
     </ScrollView>
   )
 }
@@ -140,5 +174,13 @@ const styles = StyleSheet.create({
   titleContainer: {
     // flexDirection: 'row',
     gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 18,
+    borderBottomWidth: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+    //padding: 10,
   },
 })

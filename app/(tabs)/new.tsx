@@ -7,11 +7,12 @@ import {
   StyleSheet,
   TextInput,
   TouchableWithoutFeedback,
-  View
+  View,
 } from 'react-native'
 
 import NewCyclic from '@/components/NewCyclic'
 import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ThemedView'
 import Slider from 'react-native-ui-lib/slider'
 import DateTimePicker from 'react-native-ui-lib/src/components/dateTimePicker'
 import Switch from 'react-native-ui-lib/switch'
@@ -24,6 +25,7 @@ export default function NewTaskScreen() {
   const [date, setDate] = useState<Date>(new Date())
   const [time, setTime] = useState<Date>(new Date())
   const [isTime, setIsTime] = useState<boolean>(false)
+  const [showDetails, setShowDetails] = useState<boolean>(false)
   //*** */
   const [isCyclic, setIsCyclic] = useState<boolean>(false)
   const [cyclicType, setCyclicType] = useState<0 | 1 | 2>(0)
@@ -134,7 +136,7 @@ export default function NewTaskScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 20, gap: 40, paddingTop: 70 }}
+      contentContainerStyle={styles.themedView}
       keyboardShouldPersistTaps="handled"
     >
       <DateTimePicker
@@ -163,8 +165,8 @@ export default function NewTaskScreen() {
         onChangeText={value => setTitle(value)}
       ></TextInput>
 
-      <View style={{ gap: 20 }}>
-        <TouchableWithoutFeedback onPress={() => setIsTime(prev => !prev)}>
+      <ThemedView style={styles.themedView}>
+        <TouchableWithoutFeedback onPress={() => setShowDetails(prev => !prev)}>
           <View
             style={{
               flexDirection: 'row',
@@ -172,93 +174,121 @@ export default function NewTaskScreen() {
               paddingRight: 20,
             }}
           >
-            <ThemedText style={styles.text}>Czy ustawić godzinę?</ThemedText>
+            <ThemedText style={styles.text}>Pokaż więcej opcji</ThemedText>
             <Switch
-              value={isTime}
-              onValueChange={() => setIsTime(prev => !prev)}
+              value={showDetails}
+              onValueChange={() => setShowDetails(prev => !prev)}
             ></Switch>
           </View>
         </TouchableWithoutFeedback>
-        {isTime && (
-          <DateTimePicker
-            value={time}
-            mode={'time'}
-            locale="pl-PL"
-            style={{ fontSize: 20, fontWeight: 'bold', color: 'silver' }}
-            onChange={value => {
-              setTime(value)
+
+        {showDetails && (
+          <>
+            <View style={{ gap: 20 }}>
+              <TouchableWithoutFeedback
+                onPress={() => setIsTime(prev => !prev)}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    paddingRight: 20,
+                  }}
+                >
+                  <ThemedText style={styles.text}>
+                    Czy ustawić godzinę?
+                  </ThemedText>
+                  <Switch
+                    value={isTime}
+                    onValueChange={() => setIsTime(prev => !prev)}
+                  ></Switch>
+                </View>
+              </TouchableWithoutFeedback>
+              {isTime && (
+                <DateTimePicker
+                  value={time}
+                  mode={'time'}
+                  locale="pl-PL"
+                  style={{ fontSize: 20, fontWeight: 'bold', color: 'silver' }}
+                  onChange={value => {
+                    setTime(value)
+                  }}
+                  dateTimeFormatter={time =>
+                    time.toLocaleString('pl-PL', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  }
+                />
+              )}
+            </View>
+            <View style={{ gap: 20 }}>
+              <ThemedText style={styles.text}>
+                Ustaw poziom trudności: {difficulty}
+              </ThemedText>
+              <Slider
+                style={{ width: 200, height: 40 }}
+                minimumValue={0}
+                maximumValue={5}
+                value={difficulty}
+                onValueChange={value => setDifficulty(value)}
+                step={1} //? is it default?
+                minimumTrackTintColor="#ccc"
+                maximumTrackTintColor="#303030"
+              />
+            </View>
+            <View style={{ gap: 20 }}>
+              <ThemedText style={styles.text}>
+                Ustaw priorytet: {priority}
+              </ThemedText>
+              <Slider
+                style={{ width: 200, height: 40 }}
+                minimumValue={0}
+                maximumValue={5}
+                value={priority}
+                onValueChange={value => setPriority(value)}
+                step={1} //? is it default?
+                minimumTrackTintColor="#ccc"
+                maximumTrackTintColor="#303030"
+              />
+            </View>
+          </>
+        )}
+      </ThemedView>
+
+      <ThemedView style={{ padding: 20, gap: 40, borderRadius: 20 }}>
+        <TouchableWithoutFeedback onPress={() => setIsCyclic(prev => !prev)}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              paddingRight: 20,
             }}
-            dateTimeFormatter={time =>
-              time.toLocaleString('pl-PL', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            }
+          >
+            <ThemedText style={styles.text}>
+              Czy zadanie jest cykliczne?
+            </ThemedText>
+            <Switch
+              value={isCyclic}
+              onValueChange={() => setIsCyclic(prev => !prev)}
+            ></Switch>
+          </View>
+        </TouchableWithoutFeedback>
+
+        {isCyclic && (
+          <NewCyclic
+            cyclicType={cyclicType}
+            setCyclicType={setCyclicType}
+            period={period}
+            setPeriod={setPeriod}
+            weekDays={weekDays}
+            setWeekDays={setWeekDays}
+            monthDays={monthDays}
+            setMonthDays={setMonthDays}
           />
         )}
-      </View>
+      </ThemedView>
 
-      <View style={{ gap: 20 }}>
-        <ThemedText style={styles.text}>
-          Ustaw poziom trudności: {difficulty}
-        </ThemedText>
-        <Slider
-          style={{ width: 200, height: 40 }}
-          minimumValue={0}
-          maximumValue={5}
-          value={difficulty}
-          onValueChange={value => setDifficulty(value)}
-          step={1} //? is it default?
-          minimumTrackTintColor="#ccc"
-          maximumTrackTintColor="#303030"
-        />
-      </View>
-      <View style={{ gap: 20 }}>
-        <ThemedText style={styles.text}>Ustaw priorytet: {priority}</ThemedText>
-        <Slider
-          style={{ width: 200, height: 40 }}
-          minimumValue={0}
-          maximumValue={5}
-          value={priority}
-          onValueChange={value => setPriority(value)}
-          step={1} //? is it default?
-          minimumTrackTintColor="#ccc"
-          maximumTrackTintColor="#303030"
-        />
-      </View>
-
-      <TouchableWithoutFeedback onPress={() => setIsCyclic(prev => !prev)}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingRight: 20,
-          }}
-        >
-          <ThemedText style={styles.text}>
-            Czy zadanie jest cykliczne?
-          </ThemedText>
-          <Switch
-            value={isCyclic}
-            onValueChange={() => setIsCyclic(prev => !prev)}
-          ></Switch>
-        </View>
-      </TouchableWithoutFeedback>
-
-      {isCyclic && (
-        <NewCyclic
-          cyclicType={cyclicType}
-          setCyclicType={setCyclicType}
-          period={period}
-          setPeriod={setPeriod}
-          weekDays={weekDays}
-          setWeekDays={setWeekDays}
-          monthDays={monthDays}
-          setMonthDays={setMonthDays}
-        />
-      )}
-
-      {/* <Button title="Dodaj zadanie" onPress={() => addTask()}></Button> */}
       <Pressable
         style={{
           padding: 10,
@@ -285,7 +315,6 @@ export default function NewTaskScreen() {
 }
 
 const styles = StyleSheet.create({
-  text: {
-    fontSize: 20,
-  },
+  themedView: { padding: 20, gap: 40, borderRadius: 20 },
+  text: { fontSize: 20 },
 })

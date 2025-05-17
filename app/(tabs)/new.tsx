@@ -136,7 +136,7 @@ export default function NewTaskScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.themedView}
+      contentContainerStyle={{ padding: 20, gap: 40, paddingTop: 70 }}
       keyboardShouldPersistTaps="handled"
     >
       <DateTimePicker
@@ -256,7 +256,7 @@ export default function NewTaskScreen() {
         )}
       </ThemedView>
 
-      <ThemedView style={{ padding: 20, gap: 40, borderRadius: 20 }}>
+      <ThemedView style={styles.themedView}>
         <TouchableWithoutFeedback onPress={() => setIsCyclic(prev => !prev)}>
           <View
             style={{

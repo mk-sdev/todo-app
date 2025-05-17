@@ -62,7 +62,7 @@ export default function NewCyclic({
       <View>
         {cyclicType === 0 && (
           <>
-            <Text style={styles.text}>Co ile dni?</Text>
+            <ThemedText style={[styles.text, {marginBottom:10}]}>Co ile dni?</ThemedText>
             <Slider
               style={{ width: 200, height: 40 }}
               minimumValue={1}
@@ -73,7 +73,7 @@ export default function NewCyclic({
               minimumTrackTintColor="#ccc"
               maximumTrackTintColor="#303030"
             />
-            <ThemedText style={styles.text}>
+            <ThemedText style={[styles.text,{alignSelf:'center', marginTop:10}]}>
               {period === 1 ? 'codziennie' : 'co ' + period + ' dni'}
             </ThemedText>
           </>

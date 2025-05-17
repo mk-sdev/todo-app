@@ -2,6 +2,7 @@ import TaskList from '@/components/TaskList'
 import { ThemedText } from '@/components/ThemedText'
 import {
   checkCyclicTasks,
+  checkCyclicTasksBackwards,
   getOldTasks,
   getOverdueTasks,
   getTasksState,
@@ -29,7 +30,7 @@ export default function HomeScreen() {
         const cyclicTasks = await AsyncStorage.getItem('cyclicTasks')
 
         if (cyclicTasks) {
-          await checkCyclicTasks(day, cyclicTasks)
+          await checkCyclicTasksBackwards(day, cyclicTasks)
         }
 
         //* tutaj tworzony jest stan zadań do wyświetlenia dla usera

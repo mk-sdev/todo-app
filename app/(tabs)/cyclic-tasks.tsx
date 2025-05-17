@@ -6,6 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { Button, FlatList, ScrollView, StyleSheet, View } from 'react-native'
+import { LogBox } from 'react-native'
+
+LogBox.ignoreAllLogs(true)
 
 export default function CyclicTasksScreen() {
   const [cyclicTasks, setCyclicTasks] = useState<CyclicTask[]>([])

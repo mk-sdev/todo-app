@@ -110,6 +110,31 @@ export async function toggleTaskCompletionAsync(title: string): Promise<void> {
   }
 }
 
+// pomocne jeśli chcemy wyświetlić cykliczne zadania, które są zaległe
+export async function checkCyclicTasksBackwards(
+  today: Date,
+  cyclicTasksRaw: string
+): Promise<void> {
+  const parsedCyclicTasks: CyclicTask[] = JSON.parse(cyclicTasksRaw)
+
+  // Ustal najwcześniejszą datę startu
+  const minDate = parsedCyclicTasks.reduce((min, task) => {
+    const taskDate = new Date(task.date)
+    return taskDate < min ? taskDate : min
+  }, new Date())
+
+  // Iteruj po dniach od minDate do today
+  for (
+    let day = new Date(minDate);
+    day <= today;
+    day.setDate(day.getDate() + 1)
+  ) {
+    const copy = new Date(day) // unikaj mutacji referencji
+    await checkCyclicTasks(copy, cyclicTasksRaw)
+  }
+}
+
+// sprawdza czy na dany dzień zaplanowane są jakieś cykliczne zadania
 export async function checkCyclicTasks(
   day: Date,
   cyclicTasks: string
